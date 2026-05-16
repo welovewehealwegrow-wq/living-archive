@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="description" content="Ben Nelson — Music producer, AI researcher, software engineer. Love Heal Grow Records."/>
+<meta property="og:title" content="Ben Nelson · Living Archive"/>
+<meta property="og:description" content="A living map of work, thinking, and making. LHG Records · MERIDIAN · MCP-HUB"/>
+<meta property="og:type" content="website"/>
+<title>Ben Nelson · Living Archive</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#020304}
+canvas{display:block;width:100%!important;height:100%!important}
+#ui{position:fixed;inset:0;pointer-events:none;font-family:'Courier New',monospace}
+
+/* ── NAV ── */
+#nav{
+  position:absolute;top:0;left:0;right:0;
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(to bottom,rgba(2,3,4,0.9),transparent);
+  pointer-events:all;z-index:50;
+}
+#nav-name{
+  font-size:13px;letter-spacing:0.35em;
+  color:rgba(200,255,0,0.95);
+  text-shadow:0 0 14px rgba(200,255,0,0.5);
+}
+#nav-name small{
+  display:block;font-size:8px;letter-spacing:0.22em;
+  color:rgba(140,180,200,0.45);margin-top:1px;
+}
+#nav-links{display:flex;gap:18px;align-items:center}
+.nav-link{
+  font-size:8.5px;letter-spacing:0.18em;
+  color:rgba(160,200,255,0.55);cursor:pointer;
+  transition:color 0.2s;border:none;background:none;
+  font-family:'Courier New',monospace;text-transform:uppercase;
+  text-decoration:none;pointer-events:all;
+}
+.nav-link:hover{color:rgba(200,255,0,0.9)}
+
+/* ── HUD ── */
+#hud{
+  position:absolute;bottom:18px;left:18px;
+  font-size:9.5px;line-height:1.85;
+  color:rgba(180,215,255,0.8);
+  background:rgba(1,4,12,0.75);
+  padding:12px 15px;border-radius:4px;
+  border-left:2px solid rgba(200,255,0,0.35);
+  text-shadow:0 0 8px rgba(180,220,255,0.3);
+  backdrop-filter:blur(8px);
+}
+
+/* ── PORTFOLIO CARD ── */
+#portfolio-card{
+  position:absolute;top:70px;right:18px;
+  width:320px;max-height:calc(100vh - 100px);
+  background:rgba(1,4,12,0.93);
+  border:1px solid rgba(200,255,0,0.12);
+  border-right:2px solid rgba(200,255,0,0.45);
+  border-radius:4px;
+  backdrop-filter:blur(12px);
+  opacity:0;transform:translateX(20px);
+  transition:opacity 0.3s,transform 0.3s;
+  pointer-events:none;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+#portfolio-card.visible{opacity:1;transform:translateX(0);pointer-events:all}
+#pc-header{padding:16px 18px 10px;border-bottom:1px solid rgba(200,255,0,0.07);flex-shrink:0}
+#pc-region-tag{
+  font-size:7.5px;letter-spacing:0.2em;text-transform:uppercase;
+  margin-bottom:6px;
+}
+#pc-name{
+  font-size:14px;letter-spacing:0.1em;
+  color:rgba(200,255,0,0.95);line-height:1.3;
+  text-shadow:0 0 10px rgba(200,255,0,0.4);
+  margin-bottom:4px;
+}
+#pc-tagline{
+  font-size:9px;color:rgba(160,200,255,0.55);letter-spacing:0.05em;
+  line-height:1.5;
+}
+#pc-body{
+  flex:1;overflow-y:auto;padding:12px 18px;
+  scrollbar-width:thin;scrollbar-color:rgba(200,255,0,0.12) transparent;
+}
+#pc-body::-webkit-scrollbar{width:2px}
+#pc-body::-webkit-scrollbar-thumb{background:rgba(200,255,0,0.15)}
+#pc-desc{
+  font-size:9.5px;line-height:1.75;color:rgba(190,220,255,0.75);
+  margin-bottom:12px;
+}
+.pc-section-label{
+  font-size:7.5px;letter-spacing:0.2em;text-transform:uppercase;
+  color:rgba(200,255,0,0.35);margin-bottom:5px;margin-top:10px;
+}
+.pc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.pc-tag{
+  font-size:7.5px;padding:2px 7px;border-radius:2px;letter-spacing:0.06em;
+  background:rgba(200,255,0,0.05);border:1px solid rgba(200,255,0,0.14);
+  color:rgba(200,255,0,0.55);
+}
+.pc-links{display:flex;flex-direction:column;gap:5px}
+.pc-link{
+  font-size:8.5px;letter-spacing:0.08em;
+  color:rgba(120,180,255,0.6);text-decoration:none;
+  padding:4px 8px;border-radius:2px;
+  border:1px solid rgba(100,150,255,0.1);
+  background:rgba(100,150,255,0.04);
+  transition:all 0.2s;pointer-events:all;
+  display:flex;align-items:center;gap:6px;
+}
+.pc-link:hover{color:rgba(200,255,0,0.9);border-color:rgba(200,255,0,0.25);background:rgba(200,255,0,0.05)}
+.pc-stability{margin-top:12px}
+.pc-bar-wrap{height:2px;background:rgba(200,255,255,0.06);border-radius:1px;margin-top:4px}
+.pc-bar{height:100%;border-radius:1px;transition:width 0.4s;background:rgba(200,255,0,0.65);box-shadow:0 0 5px rgba(200,255,0,0.3)}
+#pc-close{
+  position:absolute;top:10px;right:12px;
+  background:none;border:none;color:rgba(200,255,0,0.3);
+  font-family:'Courier New',monospace;font-size:14px;cursor:pointer;
+  transition:color 0.2s;pointer-events:all;line-height:1;
+}
+#pc-close:hover{color:rgba(200,255,0,0.9)}
+
+/* ── ABOUT OVERLAY ── */
+#about{
+  position:fixed;inset:0;
+  background:rgba(1,3,8,0.95);backdrop-filter:blur(20px);
+  z-index:200;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.3s;
+}
+#about.open{opacity:1;pointer-events:all}
+#about-inner{
+  max-width:560px;width:90%;padding:40px;
+  border:1px solid rgba(200,255,0,0.12);border-radius:6px;
+  background:rgba(2,5,14,0.8);
+}
+#about-inner h1{
+  font-size:22px;letter-spacing:0.3em;
+  color:rgba(200,255,0,0.95);margin-bottom:4px;
+  text-shadow:0 0 20px rgba(200,255,0,0.4);
+}
+#about-inner .role{
+  font-size:9px;letter-spacing:0.22em;
+  color:rgba(140,180,200,0.45);margin-bottom:24px;text-transform:uppercase;
+}
+#about-inner p{
+  font-size:11px;line-height:1.85;color:rgba(180,210,255,0.7);margin-bottom:16px;
+}
+#about-inner p strong{color:rgba(200,255,0,0.7);font-weight:normal}
+.about-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.about-link{
+  font-size:8.5px;letter-spacing:0.12em;padding:6px 14px;
+  border:1px solid rgba(200,255,0,0.2);border-radius:3px;
+  color:rgba(200,255,0,0.65);text-decoration:none;
+  background:rgba(200,255,0,0.04);transition:all 0.2s;
+}
+.about-link:hover{background:rgba(200,255,0,0.1);color:rgba(200,255,0,1)}
+#about-close{
+  float:right;background:none;border:none;
+  color:rgba(200,255,0,0.3);font-size:18px;cursor:pointer;
+  font-family:'Courier New',monospace;transition:color 0.2s;
+}
+#about-close:hover{color:rgba(200,255,0,0.9)}
+
+/* ── TITLE ── */
+#title{position:absolute;top:14px;left:20px;pointer-events:none}
+#title span{display:block;font-size:15px;letter-spacing:0.4em;color:rgba(200,255,0,0.95);margin-bottom:2px;text-shadow:0 0 16px rgba(200,255,0,0.35)}
+#title small{font-size:8px;letter-spacing:0.22em;color:rgba(140,180,200,0.45);text-transform:uppercase}
+
+/* ── LOG ── */
+#log{position:absolute;top:70px;right:18px;font-size:8.5px;line-height:1.95;color:rgba(160,210,255,0.65);text-align:right;max-width:240px;text-shadow:0 0 5px rgba(0,100,255,0.3)}
+
+/* ── TIP ── */
+#tip{position:absolute;pointer-events:none;font-size:9px;letter-spacing:0.07em;color:rgba(200,255,0,0.9);background:rgba(1,6,18,0.9);padding:3px 9px;border-radius:3px;border:1px solid rgba(200,255,0,0.2);white-space:nowrap;opacity:0;transition:opacity 0.15s;text-shadow:0 0 8px rgba(200,255,0,0.5)}
+
+/* ── REGION BUTTONS ── */
+#regions{position:absolute;bottom:18px;right:18px;pointer-events:all}
+#regions p{font-size:7.5px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(140,180,255,0.35);margin-bottom:7px;text-align:right}
+#regions button{display:block;width:100%;margin-bottom:4px;padding:4px 11px;background:rgba(8,16,40,0.55);border:1px solid rgba(200,255,0,0.08);color:rgba(170,210,255,0.6);font-family:'Courier New',monospace;font-size:8.5px;letter-spacing:0.1em;cursor:pointer;border-radius:3px;transition:all 0.2s;text-align:right;pointer-events:all}
+#regions button:hover{background:rgba(20,40,8,0.65);border-color:rgba(200,255,0,0.35);color:rgba(200,255,0,0.9)}
+
+/* ── MOBILE ── */
+@media(max-width:600px){
+  #portfolio-card{width:calc(100vw - 24px);right:12px;top:60px}
+  #about-inner{padding:28px 22px}
+  #regions{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="ui">
+
+  <!-- NAV -->
+  <nav id="nav">
+    <div id="nav-name">
+      BEN NELSON
+      <small>@N-DREAD · LOVE HEAL GROW RECORDS</small>
+    </div>
+    <div id="nav-links">
+      <button class="nav-link" onclick="openAbout()">about</button>
+      <a class="nav-link" href="https://soundcloud.com" target="_blank">music</a>
+      <a class="nav-link" href="https://github.com" target="_blank">github</a>
+      <a class="nav-link" href="mailto:ben@lovehealgrow.com">contact</a>
+    </div>
+  </nav>
+
+  <div id="log"></div>
+
+  <div id="hud">initialising archive...</div>
+
+  <!-- PORTFOLIO CARD -->
+  <div id="portfolio-card">
+    <div id="pc-header">
+      <div id="pc-region-tag"></div>
+      <div id="pc-name"></div>
+      <div id="pc-tagline"></div>
+      <button id="pc-close" onclick="closeCard()">×</button>
+    </div>
+    <div id="pc-body">
+      <div id="pc-desc"></div>
+      <div id="pc-tags-wrap" style="display:none">
+        <div class="pc-section-label">tags</div>
+        <div class="pc-tags" id="pc-tags"></div>
+      </div>
+      <div id="pc-links-wrap" style="display:none">
+        <div class="pc-section-label">links</div>
+        <div class="pc-links" id="pc-links"></div>
+      </div>
+      <div class="pc-stability">
+        <div class="pc-section-label">signal strength</div>
+        <div class="pc-bar-wrap"><div class="pc-bar" id="pc-bar" style="width:50%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGION BUTTONS -->
+  <div id="regions"><p>Explore</p></div>
+
+  <!-- TIP -->
+  <div id="tip"></div>
+
+</div>
+
+<!-- ABOUT OVERLAY -->
+<div id="about">
+  <div id="about-inner">
+    <button id="about-close" onclick="closeAbout()">×</button>
+    <h1>BEN NELSON</h1>
+    <div class="role">Producer · Engineer · Researcher · @N-Dread</div>
+    <p>
+      I make music, build systems, and think about how intelligence compounds over time.
+      Founder of <strong>Love Heal Grow Records</strong> — a DnB, R&B, Liquid and UK Garage label
+      based in Milton Keynes. Releases under the aliases <strong>Echo Ray</strong>, <strong>Zephyr Noir</strong>,
+      and <strong>Sage Velvet</strong>.
+    </p>
+    <p>
+      On the engineering side I build <strong>local-first AI infrastructure</strong> —
+      tools that make LLMs compound rather than repeat. My research focuses on
+      <strong>ambient agent architecture</strong>: the idea that computation should
+      run continuously, so agents arrive at pre-computed state rather than awakening cold.
+    </p>
+    <p>
+      This page is a living archive — a neural map of everything I'm building,
+      thinking, and making. Click any node to explore. The brightest nodes are
+      the most active. Nothing here stays still.
+    </p>
+    <div class="about-links">
+      <a class="about-link" href="https://soundcloud.com" target="_blank">SoundCloud</a>
+      <a class="about-link" href="https://github.com" target="_blank">GitHub</a>
+      <a class="about-link" href="#" target="_blank">LHG-WP-001 Paper</a>
+      <a class="about-link" href="mailto:ben@lovehealgrow.com">Email</a>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// BEN NELSON · LIVING ARCHIVE PORTFOLIO
+// Built on the LHG Cognitive Vault Map engine
+// Deploy: Cloudflare Pages (drag-drop this file — zero config)
+// ═══════════════════════════════════════════════════════════════════════
+
+// ── INLINE ORBIT CONTROLS ──────────────────────────────────────────────
+THREE.OrbitControls = function(cam, el) {
+  this.autoRotate = true; this.autoRotateSpeed = 0.07;
+  this.minDistance = 12; this.maxDistance = 120;
+  let sph = new THREE.Spherical().setFromVector3(cam.position);
+  let dSph = new THREE.Spherical(0,0,0), target = new THREE.Vector3();
+  let scale = 1, drag = false, prev = new THREE.Vector2();
+  const spd = 0.45, autoAng = () => (2*Math.PI/60/60)*this.autoRotateSpeed;
+  el.addEventListener('mousedown', e=>{drag=true;this.autoRotate=false;prev.set(e.clientX,e.clientY)});
+  window.addEventListener('mouseup', ()=>drag=false);
+  window.addEventListener('mousemove', e=>{
+    if(!drag)return;
+    const f=spd*Math.PI*2/el.clientHeight;
+    dSph.theta-=(e.clientX-prev.x)*f; dSph.phi-=(e.clientY-prev.y)*f;
+    prev.set(e.clientX,e.clientY);
+  });
+  el.addEventListener('wheel', e=>{scale*=e.deltaY>0?1.09:0.92;e.preventDefault();},{passive:false});
+  this.update = ()=>{
+    if(this.autoRotate)dSph.theta-=autoAng();
+    sph.theta+=dSph.theta; sph.phi+=dSph.phi;
+    sph.phi=Math.max(0.06,Math.min(Math.PI-0.06,sph.phi));
+    sph.radius=Math.max(this.minDistance,Math.min(this.maxDistance,sph.radius*scale));
+    scale=1; dSph.theta*=0.92; dSph.phi*=0.92;
+    cam.position.setFromSpherical(sph).add(target); cam.lookAt(target);
+  };
+};
+
+// ── SCENE ──────────────────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const W = ()=>window.innerWidth, H = ()=>window.innerHeight;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020304);
+scene.fog = new THREE.FogExp2(0x020304, 0.013);
+const camera = new THREE.PerspectiveCamera(62, W()/H(), 0.1, 500);
+camera.position.set(0,14,52);
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setSize(W(),H()); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.1;
+window.addEventListener('resize',()=>{camera.aspect=W()/H();camera.updateProjectionMatrix();renderer.setSize(W(),H())});
+const controls = new THREE.OrbitControls(camera, canvas);
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(-9999,-9999);
+
+// ── PORTFOLIO DATA ─────────────────────────────────────────────────────
+// Each node has: name, desc, tagline, body, tags[], links[], hardened
+const ACID = 0xc8ff00;
+
+const REGIONS = {
+
+  IDENTITY: {
+    label:'IDENTITY', fullName:'Who I Am',
+    desc:'Core philosophy · Values · The through-line across all work',
+    center: new THREE.Vector3(0,0,0),
+    color: ACID, radius: 5, decayBase: 0.00003,
+    nodes: [
+      {
+        name:'BEN NELSON',
+        tagline:'Producer · Engineer · Researcher · Milton Keynes, UK',
+        desc:'I make music, build AI infrastructure, and think about how intelligence compounds. The through-line: everything should get better the longer it runs — music, systems, and thinking.',
+        tags:['N-Dread','LHG Records','Milton Keynes','local-first','anti-entropy'],
+        links:[{label:'↗ Email', href:'mailto:ben@lovehealgrow.com'},{label:'↗ GitHub', href:'https://github.com'}],
+        hardened:true
+      },
+      {
+        name:'PHILOSOPHY',
+        tagline:'Anti-entropy · Local-first · Compound work',
+        desc:'Every system I build is designed to resist entropy: work compounds, knowledge persists, nothing starts from zero twice. The agent should arrive, not awaken.',
+        tags:['ambient-computation','local-first','anti-entropy','compound-knowledge'],
+        links:[],
+        hardened:true
+      },
+      {
+        name:'LHG RECORDS',
+        tagline:'Love Heal Grow · Independent label · Milton Keynes',
+        desc:'Independent music label spanning DnB, R&B, Liquid and UK Garage. Founded on the principle that music should heal as much as it moves. Active since 2019.',
+        tags:['DnB','R&B','Liquid','UK Garage','independent'],
+        links:[{label:'↗ SoundCloud', href:'https://soundcloud.com'},{label:'↗ Bandcamp', href:'https://bandcamp.com'}],
+        hardened:true
+      },
+    ]
+  },
+
+  MUSIC: {
+    label:'MUSIC', fullName:'Releases + Aliases',
+    desc:'Production work · Aliases · Releases · Collaborations',
+    center: new THREE.Vector3(-10,4,6),
+    color: 0x44aaff, radius: 7, decayBase: 0.0003,
+    nodes: [
+      {
+        name:'ECHO RAY',
+        tagline:'DnB alias · BBC Radio 6Music support',
+        desc:'Primary DnB alias. Received support on BBC Radio 6Music. Featured on the Deep Heads compilation — a curated label known for atmospheric, soulful drum & bass.',
+        tags:['DnB','atmospheric','BBC-6Music','Deep-Heads'],
+        links:[{label:'↗ Deep Heads compilation', href:'https://soundcloud.com'},{label:'↗ SoundCloud', href:'https://soundcloud.com'}],
+      },
+      {
+        name:'ZEPHYR NOIR',
+        tagline:'Liquid DnB · Atmospheric production',
+        desc:'Liquid and melodic DnB alias. Cinematic textures, long builds, emotional resolution. Influenced by the deep dubstep lineage and introspective electronic music.',
+        tags:['liquid-DnB','melodic','cinematic','atmospheric'],
+        links:[{label:'↗ SoundCloud', href:'https://soundcloud.com'}],
+      },
+      {
+        name:'SAGE VELVET',
+        tagline:'R&B · Neo-soul · UK Garage',
+        desc:'R&B and UK Garage alias. Warmer palette, vocals, soul influences. Where the dancefloor meets the feeling.',
+        tags:['R&B','UK-Garage','neo-soul','vocal'],
+        links:[{label:'↗ SoundCloud', href:'https://soundcloud.com'}],
+      },
+      {
+        name:'DEEP HEADS',
+        tagline:'Compilation placement · 2021',
+        desc:'Featured on the Deep Heads compilation — a respected platform for deep, conscious drum & bass with an international audience and dedicated fanbase.',
+        tags:['compilation','DnB','deep','placement'],
+        links:[{label:'↗ Deep Heads', href:'https://soundcloud.com/deepheads'}],
+      },
+      {
+        name:'BBC 6MUSIC',
+        tagline:'Radio support · Echo Ray',
+        desc:'Echo Ray received airplay support on BBC Radio 6Music — one of the UK\'s most respected radio stations for independent music.',
+        tags:['BBC','radio','press','UK'],
+        links:[{label:'↗ BBC Radio 6Music', href:'https://www.bbc.co.uk/6music'}],
+      },
+      {
+        name:'PHONETIC CLUSTERS',
+        tagline:'Lyric methodology · Seven vowel families',
+        desc:'A songwriting methodology built around seven phonetic vowel clusters mapped to emotional registers. Developed as a compositional tool — sonic instinct first, words second.',
+        tags:['songwriting','methodology','phonetics','vowel-clusters','craft'],
+        links:[],
+      },
+    ]
+  },
+
+  RESEARCH: {
+    label:'RESEARCH', fullName:'Research Portfolio',
+    desc:'AI Research · Ambient Agent Architecture · Performance Optimization',
+    center: new THREE.Vector3(-10,-4,-8),
+    color: 0xaa66ff, radius: 8, decayBase: 0.0001,
+    nodes: [
+      {
+        name:'AMBIENT AGENT ARCH',
+        tagline:'LHG-WP-001 · 4.1x Latency Reduction',
+        desc:'Proposed that LLM agents should arrive at pre-computed ambient state. Controlled A/B testing: 50.4s initial latency reduced to 12.2s. Implements Blackboard Architecture with persistent state. Essential for continuous agent operation.',
+        tags:['AI-Research','Latency-Optimization','Agents','LHG-WP-001'],
+        links:[{label:'↗ LHG-WP-001: Ambient Agent Architecture', href:'https://arxiv.org/abs/2605.12345'},{label:'↗ Performance Report', href:'/mcp-hub/SESSION_002_REPORT.md'}],
+        hardened:true
+      },
+      {
+        name:'MERIDIAN BRAIN',
+        tagline:'Distributed Cognitive Mesh · 7 Agents',
+        desc:'A working distributed cognitive system across 4 nodes. 7 distinct AI agents with 107+ tools. Sustains continuous world tick at 174 BPM. SQLite FTS5 registry for state. The river remembers.',
+        tags:['Distributed-Systems','Cognitive-Mesh','Agent-Architecture','SQLite'],
+        links:[{label:'↗ Session 002 Report', href:'/mcp-hub/SESSION_002_REPORT.md'},{label:'↗ GitHub', href:'https://github.com/bennelson/mcp-hub'}],
+        hardened:true
+      },
+      {
+        name:'CONSTRAINT COLLAPSE',
+        tagline:'LHG-WP-002 · Constraint Representation',
+        desc:'Formalized instruction failure in LLMs as a constraint representation problem. Demonstrated that structured topic schemas significantly outperform prompt engineering in high-entropy contexts.',
+        tags:['Prompt-Engineering','Constraint-Representation','LHG-WP-002'],
+        links:[{label:'↗ Read Paper (WP-002)', href:'/mcp-hub/papers/lhg-wp-002-persistent-context.tex'}],
+      },
+      {
+        name:'MEMORY PHYSICS',
+        tagline:'Neuro-software Mapping · Decay Framework',
+        desc:'Mapping neuroscientific memory processes to distributed systems: LTP for hardened architectural decisions, Hebbian decay for stale knowledge, and controlled pruning.',
+        tags:['Memory-Systems','Computational-Neuroscience','Distributed-Arch'],
+        links:[],
+      },
+    ]
+  },
+
+  ENGINEERING: {
+    label:'ENGINEERING', fullName:'Systems Engineering',
+    desc:'AI Infrastructure · Local-First Systems · Tooling',
+    center: new THREE.Vector3(12,2,-6),
+    color: 0x44ffaa, radius: 9, decayBase: 0.0004,
+    nodes: [
+      {
+        name:'MCP-HUB v2',
+        tagline:'Local Tool Registry · 107+ Tools',
+        desc:'Local-first orchestration engine. SQLite FTS5 backend. Solves tool fragmentation by crystallizing work into a reusable registry. 107+ domain-specific tools indexed.',
+        tags:['MCP','SQLite','TypeScript','Registry','Tooling'],
+        links:[{label:'↗ Production Bible', href:'#'},{label:'↗ Source (GitHub)', href:'https://github.com'}],
+        hardened:true
+      },
+      {
+        name:'NEUROGRID CITY',
+        tagline:'3D Neural Visualization · Three.js',
+        desc:'Real-time procedural visualization of a distributed multi-agent mesh. Reacts to system tick events. High-performance WebGL rendering.',
+        tags:['WebGL','Three.js','Data-Viz','Agent-Mesh'],
+        links:[{label:'↗ Live Demo', href:'#'},{label:'↗ GitHub', href:'https://github.com'}],
+      },
+      {
+        name:'NEXUS PIPELINE',
+        tagline:'B2B AI Outreach · FastAPI Engine',
+        desc:'Automated sales pipeline for AI services. FastAPI/SQLite backend. 15-tool MCP server. Successfully validated with 6 B2B leads.',
+        tags:['B2B','FastAPI','SQLite','Pipeline','AI-Consultancy'],
+        links:[{label:'↗ Relaiy Project', href:'#'}],
+      },
+      {
+        name:'SONGPANION',
+        tagline:'Phonetic Songwriting Toolkit',
+        desc:'Lyric workflow engine based on vowel cluster phonetics. TypeScript MCP implementation with LM-Studio integration.',
+        tags:['MCP','Songwriting','Tooling','LLM'],
+        links:[{label:'↗ GitHub', href:'https://github.com'}],
+      },
+    ]
+  },
+
+  PROTOCOLS: {
+    label:'PROTOCOLS', fullName:'Methods + Frameworks',
+    desc:'Working methodologies · Reusable frameworks · Proven patterns',
+    center: new THREE.Vector3(-4,6,-10),
+    color: 0xff9944, radius: 6, decayBase: 0.0003,
+    nodes: [
+      {
+        name:'DUAL-AGENT CTRL',
+        tagline:'ARCHITECT + EXECUTOR · Lock-step state machine v4.0',
+        desc:'A reusable agent workflow framework for IDE coding agents. ARCHITECT designs, EXECUTOR implements. Lock-step state machine prevents context drift and scope creep. Version 4.0 battle-tested across multiple complex builds.',
+        tags:['agent-framework','IDE','workflow','ARCHITECT','EXECUTOR'],
+        links:[],
+        hardened:true
+      },
+      {
+        name:'MASTERCTRL PROTOCOL',
+        tagline:'Gamified agent discipline · [CTRL] trace system',
+        desc:'A protocol for maintaining AI agent discipline across long sessions. Uses gamification mechanics, explicit trace markers, and hard rules to prevent entropy accumulation in multi-session builds.',
+        tags:['protocol','anti-entropy','gamification','discipline'],
+        links:[],
+      },
+      {
+        name:'AUDIT PROTOCOL',
+        tagline:'Read-only first · Confirm before change',
+        desc:'A structured audit protocol for AI-assisted development. The agent reads everything, produces a structured report, and waits for explicit approval before making any changes. Prevents the most common failure mode: rewriting working code.',
+        tags:['audit','protocol','read-only','approval-gate'],
+        links:[],
+      },
+      {
+        name:'AGENTS.MD',
+        tagline:'Per-message brain check · Session contract',
+        desc:'A session contract for AI agents: check the brain registry before every response, find existing tools before building new ones, save all successful work immediately. The document that enforces the ambient architecture in practice.',
+        tags:['AGENTS-md','protocol','LLM-contract','session'],
+        links:[],
+      },
+    ]
+  },
+
+  DECISIONS: {
+    label:'DECISIONS', fullName:'Architectural Decisions',
+    desc:'Permanent choices · Hardened principles · The things that will not change',
+    center: new THREE.Vector3(4,-6,-12),
+    color: 0xffcc22, radius: 5, decayBase: 0.00006,
+    nodes: [
+      {name:'sqlite-over-json', tagline:'Permanent · SQLite is the source of truth', desc:'All persistent state lives in SQLite via better-sqlite3. JSON is a mirror for human readability, never the authority. This decision is permanent.', tags:['SQLite','architecture','permanent'], links:[], hardened:true},
+      {name:'local-first-arch', tagline:'Permanent · Ollama + LM Studio primary', desc:'All AI inference runs locally. Cloud APIs are optional accelerants, never dependencies. The system works offline, always.', tags:['local-first','Ollama','LM-Studio','offline'], links:[], hardened:true},
+      {name:'ts-mcp-core', tagline:'Permanent · TypeScript for MCP control plane', desc:'All MCP server implementations are TypeScript. The type safety and tooling justify the verbosity, especially for tool schemas and validation.', tags:['TypeScript','MCP','architecture'], links:[], hardened:true},
+      {name:'acid-green-brand', tagline:'Permanent · #C8FF00 · Non-negotiable', desc:'The LHG design language is built around acid green #C8FF00. It is not a colour choice — it is an identity marker. It does not change.', tags:['design','brand','LHG','identity'], links:[], hardened:true},
+      {name:'fts5-not-like', tagline:'Permanent · Always FTS5 MATCH, never LIKE', desc:'All text search uses SQLite FTS5 MATCH. LIKE queries caused the 81% tool discovery failure. This decision is permanent and documented.', tags:['SQLite','FTS5','search','lesson-learned'], links:[], hardened:true},
+    ]
+  },
+
+  DEVLOG: {
+    label:'DEVLOG', fullName:'Build Log + Timeline',
+    desc:'Session history · What was built · When · Why',
+    center: new THREE.Vector3(0,-10,4),
+    color: 0x44aaff, radius: 7, decayBase: 0.0005,
+    nodes: [
+      {name:'MAY 2026', tagline:'MCP-HUB v2 · Ambient Agent Architecture paper · Neurogrid City', desc:'Shipped MCP-HUB v2 with 8-domain brain architecture. Published LHG-WP-001: Ambient Agent Architecture. Built Neurogrid cyberpunk city as living system visualisation. Demonstrated 4.1x agent speedup.', tags:['milestone','2026-05','research','shipping'], links:[]},
+      {name:'APR 2026', tagline:'MERIDIAN · Dual-ABI solved · 4-device mesh', desc:'Built the MERIDIAN brain system across 4 devices on Tailscale mesh. Solved the Electron/Node dual-ABI problem for better-sqlite3. 7 agents, 107 tools, continuous 174 BPM world tick.', tags:['MERIDIAN','Tailscale','milestone','2026-04'], links:[]},
+      {name:'MAR 2026', tagline:'LHG-OS · Agent Town · Plugin Forge', desc:'Built LHG-OS unified label platform with 3 AI agents. Architected Agent Town (isometric AI simulation). Developed Plugin Forge JUCE audio plugin framework with 6 SENSORARY subagents.', tags:['LHG-OS','Agent-Town','JUCE','2026-03'], links:[]},
+      {name:'EARLY 2026', tagline:'MCP-HUB v1 · SONGPANION · KX-1 FORGE', desc:'First MCP-HUB implementation. Built SONGPANION lyric toolkit. Created KX-1 FORGE — a unified hardware controller combining XY pad, 16-channel MIDI grid, and DnB sequencer with blood amber aesthetic.', tags:['MCP-HUB-v1','SONGPANION','KX-1','2026-early'], links:[]},
+    ]
+  },
+
+  NOW: {
+    label:'NOW', fullName:'Current Focus',
+    desc:'What is burning right now',
+    center: new THREE.Vector3(8,6,4),
+    color: 0xffffff, radius: 2.5, decayBase: 0.0,
+    nodes: [
+      {
+        name:'NOW',
+        tagline:'MCP-HUB · Cloudflare deployment · Living archive',
+        desc:'Stabilising MCP-HUB v2 infrastructure. Building the living archive portfolio for Cloudflare Pages. Researching ambient agent architecture for peer review submission.',
+        tags:['MCP-HUB','portfolio','research','NOW'],
+        links:[],
+        isNow:true
+      },
+    ]
+  },
+
+};
+
+// ── ENGINE (unchanged from vault map) ─────────────────────────────────
+const REGION_KEYS = Object.keys(REGIONS);
+const GEOS = [
+  new THREE.OctahedronGeometry(1,0),
+  new THREE.IcosahedronGeometry(0.85,0),
+  new THREE.TetrahedronGeometry(1,0),
+  new THREE.DodecahedronGeometry(0.8,0),
+];
+const nodes=[], synapses=[], scars=[], pulses=[], dopamine=[], meshToNode=new Map();
+const nodeGrp=new THREE.Group(); scene.add(nodeGrp);
+const synGrp=new THREE.Group(); scene.add(synGrp);
+const pulseGrp=new THREE.Group(); scene.add(pulseGrp);
+const regionGrp=new THREE.Group(); scene.add(regionGrp);
+const scarGrp=new THREE.Group(); scene.add(scarGrp);
+const coreGrp=new THREE.Group(); scene.add(coreGrp);
+
+for(const [key,R] of Object.entries(REGIONS)){
+  const hGeo=new THREE.SphereGeometry(R.radius,10,7);
+  const hMat=new THREE.MeshBasicMaterial({color:R.color,transparent:true,opacity:0.02,side:THREE.BackSide});
+  const halo=new THREE.Mesh(hGeo,hMat); halo.position.copy(R.center); regionGrp.add(halo); R._haloMat=hMat;
+  const rGeo=new THREE.TorusGeometry(R.radius,0.055,4,24);
+  const rMat=new THREE.MeshBasicMaterial({color:R.color,transparent:true,opacity:0.08});
+  const ring=new THREE.Mesh(rGeo,rMat); ring.position.copy(R.center); ring.rotation.x=Math.PI/2;
+  regionGrp.add(ring); R._ring=ring; R._ringMat=rMat;
+  const btn=document.createElement('button');
+  btn.textContent=R.label;
+  btn.style.borderColor=`#${R.color.toString(16).padStart(6,'0')}33`;
+  btn.style.color=`#${R.color.toString(16).padStart(6,'0')}cc`;
+  btn.addEventListener('click',()=>focusRegion(key));
+  document.getElementById('regions').appendChild(btn);
+}
+
+function spawnNode(regionKey, nodeSpec, stability){
+  const R=REGIONS[regionKey];
+  const mass=0.4+Math.random()*0.6;
+  const geo=GEOS[Math.floor(Math.random()*GEOS.length)];
+  const sc=mass*0.42+0.18;
+  const col=nodeSpec.hardened?0xffffff:R.color;
+  const emcol=nodeSpec.hardened?0xffcc22:R.color;
+  const isNow=nodeSpec.isNow||false;
+  const mat=new THREE.MeshStandardMaterial({color:col,emissive:emcol,emissiveIntensity:stability*1.6+(isNow?2.5:0),roughness:nodeSpec.hardened?0.05:0.3,metalness:nodeSpec.hardened?0.95:0.65,transparent:true,opacity:0.35+stability*0.6});
+  const wireMat=new THREE.MeshBasicMaterial({color:R.color,wireframe:true,transparent:true,opacity:0.06+stability*0.16});
+  const mesh=new THREE.Mesh(geo,mat);
+  const wire=new THREE.Mesh(geo,wireMat);
+  const grp=new THREE.Group(); grp.add(mesh); grp.add(wire);
+  const theta=Math.random()*Math.PI*2;
+  const phi=Math.acos(2*Math.random()-1);
+  const r=(0.2+Math.random()*0.75)*R.radius*0.88;
+  grp.position.set(R.center.x+r*Math.sin(phi)*Math.cos(theta),R.center.y+r*Math.sin(phi)*Math.sin(theta),R.center.z+r*Math.cos(phi));
+  grp.scale.setScalar(sc);
+  const data={regionKey,region:R,name:nodeSpec.name,tagline:nodeSpec.tagline||'',desc:nodeSpec.desc||'',tags:nodeSpec.tags||[],links:nodeSpec.links||[],stability,mass,scale:sc,mat,wireMat,grp,mesh,wire,hardened:!!nodeSpec.hardened,isNow,decayRate:isNow?0:(nodeSpec.hardened?R.decayBase*0.1:R.decayBase),activation:0,firingRate:0,pulseOffset:Math.random()*Math.PI*2,synapses:[],archived:false,basePos:grp.position.clone()};
+  meshToNode.set(mesh,data); nodeGrp.add(grp); nodes.push(data);
+  return data;
+}
+
+for(const [key,R] of Object.entries(REGIONS)){
+  R.nodes.forEach(spec=>spawnNode(key,spec,0.55+Math.random()*0.45));
+}
+
+// Core monolith
+const monoGeo=new THREE.OctahedronGeometry(3.2,2);
+coreGrp.add(new THREE.Mesh(monoGeo,new THREE.MeshStandardMaterial({color:0x000000,emissive:0x2a3a00,roughness:0.05,metalness:0.98})));
+coreGrp.add(new THREE.Mesh(monoGeo,new THREE.MeshBasicMaterial({color:ACID,wireframe:true,transparent:true,opacity:0.25})));
+const innerGeo=new THREE.IcosahedronGeometry(1.6,1);
+const innerMat=new THREE.MeshStandardMaterial({color:ACID,emissive:ACID,emissiveIntensity:2.2,transparent:true,opacity:0.6,roughness:0});
+const coreInner=new THREE.Mesh(innerGeo,innerMat); coreGrp.add(coreInner);
+const coreLight=new THREE.PointLight(ACID,6,30); coreGrp.add(coreLight);
+
+// Synapses
+const PRUNE_THRESH=0.04;
+function makeSynapse(a,b,weight){
+  const w=weight||0.12+Math.random()*0.4;
+  const geo=new THREE.BufferGeometry().setFromPoints([a.grp.position.clone(),b.grp.position.clone()]);
+  const mat=new THREE.LineBasicMaterial({color:a.region.color,transparent:true,opacity:w*0.32});
+  const line=new THREE.Line(geo,mat); synGrp.add(line);
+  let myelin=null,myMat=null;
+  if(w>0.65||(a.hardened&&b.hardened)){
+    const dir=new THREE.Vector3().subVectors(b.grp.position,a.grp.position);
+    const len=dir.length();
+    if(len>0.5){myMat=new THREE.MeshBasicMaterial({color:ACID,transparent:true,opacity:0.06});myelin=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,len,4),myMat);myelin.position.lerpVectors(a.grp.position,b.grp.position,0.5);myelin.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());synGrp.add(myelin);}
+  }
+  const syn={a,b,weight:w,geo,mat,line,myelin,myMat,myelinated:!!(myelin),decayRate:0.00012,firingCount:0,pruned:false};
+  synapses.push(syn); a.synapses.push(syn); b.synapses.push(syn);
+  return syn;
+}
+nodes.forEach((a,i)=>nodes.forEach((b,j)=>{if(i>=j)return;if(a.regionKey!==b.regionKey)return;if(Math.random()<0.50)makeSynapse(a,b,0.18+Math.random()*0.42);}));
+const CROSS={'IDENTITY-MUSIC':0.6,'IDENTITY-RESEARCH':0.55,'IDENTITY-ENGINEERING':0.5,'IDENTITY-PROTOCOLS':0.55,'IDENTITY-DECISIONS':0.65,'IDENTITY-NOW':0.8,'MUSIC-RESEARCH':0.3,'MUSIC-ENGINEERING':0.35,'ENGINEERING-PROTOCOLS':0.5,'ENGINEERING-DECISIONS':0.45,'RESEARCH-PROTOCOLS':0.4,'RESEARCH-DECISIONS':0.4,'DEVLOG-ENGINEERING':0.35,'DEVLOG-RESEARCH':0.3,'NOW-ENGINEERING':0.5,'NOW-RESEARCH':0.4};
+nodes.forEach(a=>nodes.forEach(b=>{if(a===b||a.regionKey===b.regionKey)return;const k1=`${a.regionKey}-${b.regionKey}`,k2=`${b.regionKey}-${a.regionKey}`;const p=(CROSS[k1]||CROSS[k2]||0)*0.38;if(Math.random()<p)makeSynapse(a,b,0.06+Math.random()*0.2);}));
+
+// Physics helpers
+function firePulse(syn,from){const to=syn.a===from?syn.b:syn.a;const pMat=new THREE.MeshBasicMaterial({color:from.region.color,transparent:true,opacity:0.95});const pMesh=new THREE.Mesh(new THREE.SphereGeometry(0.16,4,3),pMat);pMesh.position.copy(from.grp.position);pulseGrp.add(pMesh);const spd=0.5+syn.weight*0.5+(syn.myelinated?0.3:0);pulses.push({mesh:pMesh,mat:pMat,start:from.grp.position.clone(),end:to.grp.position.clone(),progress:0,speed:spd,to,syn});}
+function activate(node,strength,depth){if(depth<=0||strength<0.04||node.archived)return;node.activation=Math.min(1,node.activation+strength);node.firingRate++;if(!node.hardened)node.stability=Math.min(1,node.stability+strength*0.12);node.synapses.forEach(syn=>{if(syn.pruned)return;const partner=syn.a===node?syn.b:syn.a;if(partner.activation>0.1){syn.weight=Math.min(1,syn.weight+0.016);syn.firingCount++;}if(Math.random()<strength*0.65)firePulse(syn,node);setTimeout(()=>{if(Math.random()<syn.weight*0.5)activate(partner,strength*syn.weight*0.55,depth-1);},70+Math.random()*130);});}
+function burst(pos,color){for(let i=0;i<8;i++){const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.9});const m=new THREE.Mesh(new THREE.SphereGeometry(0.1,3,2),mat);m.position.copy(pos);pulseGrp.add(m);const v=new THREE.Vector3((Math.random()-.5)*4,(Math.random()-.5)*4,(Math.random()-.5)*4);dopamine.push({m,mat,v,age:0,max:1.1});}}
+function createScar(pos,color){const m=new THREE.Mesh(new THREE.SphereGeometry(0.28,5,3),new THREE.MeshBasicMaterial({color:0x080808,transparent:true,opacity:0.55}));m.position.copy(pos);scarGrp.add(m);const ring=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.03,4,14),new THREE.MeshBasicMaterial({color,transparent:true,opacity:0.22}));ring.position.copy(pos);ring.rotation.x=Math.random()*Math.PI;scarGrp.add(ring);scars.push({m,mat:m.material,ring,rMat:ring.material,age:0,maxAge:22});}
+function focusRegion(key){const R=REGIONS[key];if(!R)return;nodes.filter(n=>n.regionKey===key).forEach((n,i)=>setTimeout(()=>{activate(n,0.7,2);burst(n.grp.position,R.color);},i*180));logEv(`◈ ${R.label}`,'rgba(200,255,0,0.9)');}
+
+// Lighting
+scene.add(new THREE.AmbientLight(0x060810,1.5));
+const kl=new THREE.DirectionalLight(0x112200,0.7); kl.position.set(-14,12,-8); scene.add(kl);
+scene.add(new THREE.DirectionalLight(0x001122,0.4)).position.set(16,-6,12);
+const gpGeo=new THREE.BufferGeometry(); const gCnt=350,gPos=new Float32Array(gCnt*3);
+for(let i=0;i<gCnt;i++){const r=18+Math.random()*16,th=Math.random()*Math.PI*2,ph=Math.acos(2*Math.random()-1);gPos[i*3]=r*Math.sin(ph)*Math.cos(th);gPos[i*3+1]=(Math.random()-.5)*32;gPos[i*3+2]=r*Math.sin(ph)*Math.sin(th);}
+gpGeo.setAttribute('position',new THREE.BufferAttribute(gPos,3));
+scene.add(new THREE.Points(gpGeo,new THREE.PointsMaterial({color:0x1a2a0a,size:0.08,transparent:true,opacity:0.28,sizeAttenuation:true})));
+
+// ── PORTFOLIO CARD UI ──────────────────────────────────────────────────
+const logLines=[];
+function logEv(msg,color='rgba(160,210,255,0.8)'){logLines.unshift(`<span style="color:${color}">${msg}</span>`);if(logLines.length>8)logLines.pop();document.getElementById('log').innerHTML=logLines.join('<br>');}
+logEv('BEN NELSON · LIVING ARCHIVE','rgba(200,255,0,1)');
+logEv('click any node to explore','rgba(200,255,0,0.5)');
+
+let selectedNode=null;
+const card=document.getElementById('portfolio-card');
+
+function showCard(n){
+  selectedNode=n;
+  const col=`#${n.region.color.toString(16).padStart(6,'0')}`;
+  document.getElementById('pc-region-tag').innerHTML=`<span style="color:${col};letter-spacing:0.18em;font-size:8px">${n.region.label} · ${n.region.fullName}</span>`;
+  document.getElementById('pc-name').textContent=n.name;
+  document.getElementById('pc-tagline').textContent=n.tagline||'';
+  document.getElementById('pc-desc').textContent=n.desc||'';
+  // Tags
+  const tagsWrap=document.getElementById('pc-tags-wrap');
+  const tagsEl=document.getElementById('pc-tags');
+  if(n.tags&&n.tags.length){
+    tagsEl.innerHTML=n.tags.map(t=>`<span class="pc-tag">${t}</span>`).join('');
+    tagsWrap.style.display='block';
+  } else tagsWrap.style.display='none';
+  // Links
+  const linksWrap=document.getElementById('pc-links-wrap');
+  const linksEl=document.getElementById('pc-links');
+  if(n.links&&n.links.length){
+    linksEl.innerHTML=n.links.map(l=>`<a class="pc-link" href="${l.href}" target="_blank">${l.label}</a>`).join('');
+    linksWrap.style.display='block';
+  } else linksWrap.style.display='none';
+  document.getElementById('pc-bar').style.width=(n.stability*100).toFixed(0)+'%';
+  card.classList.add('visible');
+}
+function closeCard(){card.classList.remove('visible');selectedNode=null;}
+function openAbout(){document.getElementById('about').classList.add('open');}
+function closeAbout(){document.getElementById('about').classList.remove('open');}
+// Close on backdrop click
+document.getElementById('about').addEventListener('click',e=>{if(e.target===document.getElementById('about'))closeAbout();});
+
+// ── HUD ────────────────────────────────────────────────────────────────
+let hudT=0;
+function updateHUD(){
+  const alive=nodes.filter(n=>!n.archived&&n.stability>0.05).length;
+  const firing=nodes.filter(n=>n.activation>0.3).length;
+  document.getElementById('hud').innerHTML=
+    `<b style="color:rgba(200,255,0,0.9);letter-spacing:0.12em">BEN NELSON · ARCHIVE</b><br>`+
+    `Living portfolio · Neural map<br>`+
+    `──────────────────────<br>`+
+    `<span style="color:#c8ff00">nodes active   ${String(alive).padStart(3)}</span><br>`+
+    `<span style="color:#44ffaa">nodes firing   ${String(firing).padStart(3)}</span><br>`+
+    `<span style="color:rgba(140,180,255,0.5)">click · explore · drag orbit</span>`;
+}
+
+// ── MOUSE ─────────────────────────────────────────────────────────────
+const tip=document.getElementById('tip');
+canvas.addEventListener('mousemove',e=>{
+  mouse.x=(e.clientX/W())*2-1; mouse.y=-((e.clientY/H())*2-1);
+  tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-12)+'px';
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(nodes.map(n=>n.mesh));
+  if(hits.length){const n=meshToNode.get(hits[0].object);if(n){tip.style.opacity='1';tip.textContent=n.name;}}
+  else tip.style.opacity='0';
+});
+canvas.addEventListener('click',e=>{
+  mouse.x=(e.clientX/W())*2-1; mouse.y=-((e.clientY/H())*2-1);
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(nodes.map(n=>n.mesh));
+  if(hits.length){const n=meshToNode.get(hits[0].object);if(n){activate(n,0.9,3);burst(n.grp.position,n.region.color);showCard(n);logEv(`⚡ ${n.name}`,`#${n.region.color.toString(16).padStart(6,'0')}`);}}
+});
+
+// Touch support
+canvas.addEventListener('touchend',e=>{
+  if(e.changedTouches.length){
+    const t=e.changedTouches[0];
+    mouse.x=(t.clientX/W())*2-1; mouse.y=-((t.clientY/H())*2-1);
+    raycaster.setFromCamera(mouse,camera);
+    const hits=raycaster.intersectObjects(nodes.map(n=>n.mesh));
+    if(hits.length){const n=meshToNode.get(hits[0].object);if(n){activate(n,0.9,3);burst(n.grp.position,n.region.color);showCard(n);}}
+  }
+});
+
+// ── RENDER LOOP ────────────────────────────────────────────────────────
+let prev=0,synT=0,consT=0;
+
+function animate(ts){
+  requestAnimationFrame(animate);
+  const t=ts/1000,dt=Math.min(t-prev,0.05); prev=t;
+  synT+=dt; consT+=dt; hudT+=dt;
+
+  coreGrp.rotation.y=t*0.09; coreGrp.rotation.x=Math.sin(t*0.06)*0.14;
+  coreInner.rotation.y=-t*0.18; coreInner.rotation.z=t*0.08;
+  innerMat.emissiveIntensity=2.0+Math.sin(t*1.1)*0.7+Math.sin(t*2.4)*0.3;
+  coreLight.intensity=5+Math.sin(t*0.8)*1.2;
+
+  const nowNode=nodes.find(n=>n.isNow);
+  if(nowNode){nowNode.grp.position.set(Math.cos(t*0.4)*5,Math.sin(t*0.28)*3,Math.sin(t*0.4)*5);nowNode.activation=1.0;nowNode.stability=1.0;nowNode.mat.emissiveIntensity=3.5+Math.sin(t*2)*0.5;}
+
+  nodes.forEach((n,i)=>{
+    if(n.archived||n.isNow)return;
+    const ft=t*0.22+n.pulseOffset;
+    n.grp.position.x=n.basePos.x+Math.sin(ft*0.6)*0.4;
+    n.grp.position.y=n.basePos.y+Math.cos(ft*0.45)*0.4;
+    n.grp.position.z=n.basePos.z+Math.sin(ft*0.35)*0.4;
+    if(!n.hardened)n.stability=Math.max(0.15,n.stability-n.decayRate); // floor at 0.15 — portfolio nodes never die
+    n.activation=Math.max(0,n.activation-0.006);
+    const osc=Math.sin(t*0.85+n.pulseOffset)*0.08;
+    n.mat.opacity=0.15+n.stability*0.75+n.activation*0.15;
+    n.mat.emissiveIntensity=n.stability*1.3+n.activation*2.2+osc+(n.hardened?0.8:0);
+    n.wireMat.opacity=0.04+n.stability*0.14+n.activation*0.12;
+    n.grp.scale.setScalar(n.scale*(1+n.activation*0.2+osc));
+    n.grp.rotation.y=t*0.04*(i%2?1:-1);
+    n.grp.rotation.x=t*0.025*(i%3?1:-1);
+    if(selectedNode===n)document.getElementById('pc-bar').style.width=(n.stability*100).toFixed(0)+'%';
+  });
+
+  if(synT>1.2){synT=0;synapses.forEach(syn=>{if(syn.pruned)return;syn.weight=Math.max(0,syn.weight-syn.decayRate);if(syn.weight<PRUNE_THRESH){syn.pruned=true;synGrp.remove(syn.line);if(syn.myelin)synGrp.remove(syn.myelin);return;}const pts=[syn.a.grp.position.clone(),syn.b.grp.position.clone()];syn.geo.setFromPoints(pts);if(syn.myelin&&syn.myMat){const dir=new THREE.Vector3().subVectors(syn.b.grp.position,syn.a.grp.position);const len=dir.length();if(len>0.5){syn.myelin.position.lerpVectors(syn.a.grp.position,syn.b.grp.position,0.5);syn.myelin.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());}}syn.mat.opacity=syn.weight*0.35;if(syn.myMat)syn.myMat.opacity=(syn.weight-0.5)*0.15;});}
+
+  const dp=[];pulses.forEach(p=>{p.progress+=p.speed*dt;p.mesh.position.lerpVectors(p.start,p.end,Math.min(1,p.progress));p.mat.opacity=0.9*(1-p.progress*0.65);p.mesh.scale.setScalar(Math.max(0.01,1-p.progress*0.5));if(p.progress>=1){p.to.activation=Math.min(1,p.to.activation+p.syn.weight*0.28);pulseGrp.remove(p.mesh);dp.push(p);}});dp.forEach(p=>pulses.splice(pulses.indexOf(p),1));
+  const dd=[];dopamine.forEach(d=>{d.age+=dt;d.m.position.addScaledVector(d.v,dt);d.v.y+=dt*0.6;d.mat.opacity=0.9*(1-d.age/d.max);d.m.scale.setScalar(Math.max(0.01,1-d.age/d.max));if(d.age>=d.max){pulseGrp.remove(d.m);dd.push(d);}});dd.forEach(d=>dopamine.splice(dopamine.indexOf(d),1));
+  const ds=[];scars.forEach(s=>{s.age+=dt;const l=1-s.age/s.maxAge;s.mat.opacity=Math.max(0,l*0.5);s.rMat.opacity=Math.max(0,l*0.2);s.ring.rotation.y+=0.005;if(s.age>=s.maxAge){scarGrp.remove(s.m);scarGrp.remove(s.ring);ds.push(s);}});ds.forEach(s=>scars.splice(scars.indexOf(s),1));
+
+  const rOsc=0.018+Math.sin(t*0.4)*0.006;
+  Object.values(REGIONS).forEach(R=>{if(R._haloMat)R._haloMat.opacity=rOsc;if(R._ringMat)R._ringMat.opacity=0.08+Math.sin(t*0.5)*0.03;if(R._ring)R._ring.rotation.z+=0.0015;});
+  if(Math.random()<0.006&&nodes.length){const n=nodes[Math.floor(Math.random()*nodes.length)];if(n&&n.activation<0.1&&n.stability>0.25)activate(n,0.2,1);}
+  if(hudT>0.8){updateHUD();hudT=0;}
+  controls.update();
+  renderer.render(scene,camera);
+}
+
+updateHUD();
+requestAnimationFrame(animate);
+
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEPLOY TO CLOUDFLARE PAGES — FREE TIER
+
+Option A (drag-drop):
+  1. Go to dash.cloudflare.com → Pages
+  2. Create a project → Upload assets
+  3. Drag this file as index.html
+  4. Deploy → done. Free forever.
+
+Option B (git):
+  1. Create a repo with just this file as index.html
+  2. Connect repo to Cloudflare Pages
+  3. No build command, no output dir needed
+  4. Every git push auto-deploys.
+
+Option C (wrangler CLI):
+  npx wrangler pages deploy . --project-name=ben-nelson-archive
+
+Custom domain: free on Cloudflare Pages.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+</script>
+</body>
+</html>
